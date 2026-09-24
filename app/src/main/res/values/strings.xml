@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">ScreenLink</string>
+    <string name="channel_host_name">屏幕共享</string>
+    <string name="channel_host_desc">正在把本机屏幕共享给已授权的控制端</string>
+    <string name="notif_host_title">ScreenLink 正在被远程控制</string>
+    <string name="notif_host_text">点击回到 App，或在这里停止共享</string>
+    <string name="action_stop">停止</string>
+</resources>
