@@ -15,6 +15,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Security
+import androidx.compose.material.icons.filled.Terminal
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -35,6 +36,9 @@ import com.screenlink.app.core.AppSettings
 import com.screenlink.app.core.QualityPreset
 import com.screenlink.app.core.ServiceLocator
 import com.screenlink.app.core.ThemeMode
+import com.screenlink.app.input.InjectorConfig
+import com.screenlink.app.input.InjectorMode
+import com.screenlink.app.input.InputInjector
 import com.screenlink.app.ui.components.ChoiceRow
 import com.screenlink.app.ui.components.SectionCard
 import kotlinx.coroutines.launch
@@ -88,6 +92,28 @@ fun SettingsScreen(onBack: () -> Unit) {
                 )
             }
 
+            SectionCard(title = "输入注入", icon = Icons.Default.Terminal) {
+                val current = InjectorMode.entries
+                    .firstOrNull { it.name == settings.injectMode } ?: InjectorMode.AUTO
+                ChoiceRow(
+                    options = InjectorMode.entries.toList(),
+                    selected = current,
+                    label = { it.label },
+                    onSelect = { mode ->
+                        scope.launch { repository.setInjectMode(mode.name) }
+                        InjectorConfig.mode = mode
+                        InputInjector.prepare()
+                    },
+                )
+                Text(
+                    text = "实时注入：用 Shizuku 代理直接 injectInputEvent，点按滑动都跟手，这是默认方式。\n" +
+                        "命令注入：用 shell 跑 input tap / swipe，兼容性最好，但只能松手才生效，拖动会有延迟。\n" +
+                        "改完之后被控端页面的「注入自检」可以验证。",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+
             SectionCard(title = "画质", icon = Icons.Default.Tune) {
                 Text("画面宽度", style = MaterialTheme.typography.labelLarge)
                 ChoiceRow(
@@ -128,7 +154,7 @@ fun SettingsScreen(onBack: () -> Unit) {
 
             SectionCard(title = "关于", icon = Icons.Default.Info) {
                 Text(
-                    text = "ScreenLink v1.0.0\n" +
+                    text = "ScreenLink v1.0.1\n" +
                         "· 被控端：MediaProjection 采集 + Shizuku 注入\n" +
                         "· 传输：TCP 自定义协议，AES-256-GCM 加密\n" +
                         "· 鉴权：HMAC-SHA256 挑战应答，密钥不上网\n" +

@@ -96,7 +96,8 @@ fun HostScreen(onBack: () -> Unit) {
     val hostState by HostRuntime.state.collectAsState()
     val logs by HostRuntime.logs.collectAsState()
     val shizukuState by ShizukuBridge.state.collectAsState()
-    val injectMode by InputInjector.mode.collectAsState()
+    val injectorStatus by InputInjector.status.collectAsState()
+    val injectorError by InputInjector.lastError.collectAsState()
 
     var keyInput by remember { mutableStateOf("") }
     var portInput by remember { mutableStateOf("") }
@@ -361,14 +362,29 @@ fun HostScreen(onBack: () -> Unit) {
                             value = "q${com.screenlink.app.capture.LiveQuality.jpegQuality}",
                         )
                     }
-                    val modeText = if (injectMode.isBlank()) hostState.injectMode else injectMode
                     StatusLine(
                         color = when (shizukuState) {
                             ShizukuState.AUTHORIZED -> MaterialTheme.colorScheme.primary
                             else -> MaterialTheme.colorScheme.error
                         },
-                        text = "注入方式：$modeText",
+                        text = "注入方式：${injectorStatus}",
                     )
+                    injectorError?.let { error ->
+                        Text(
+                            text = "最近一次注入错误：$error",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.error,
+                        )
+                    }
+                    FilledTonalButton(onClick = { InputInjector.selfTest() }) {
+                        Icon(
+                            Icons.Default.PlayArrow,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp),
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("注入自检")
+                    }
                 }
             }
 

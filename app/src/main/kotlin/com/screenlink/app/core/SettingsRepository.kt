@@ -29,6 +29,7 @@ class SettingsRepository(private val context: Context) {
         val lastHost = stringPreferencesKey("last_host")
         val lastPort = intPreferencesKey("last_port")
         val keepAwake = booleanPreferencesKey("keep_awake")
+        val injectMode = stringPreferencesKey("inject_mode")
     }
 
     val settings: Flow<AppSettings> = context.dataStore.data
@@ -47,6 +48,7 @@ class SettingsRepository(private val context: Context) {
     suspend fun setLastHost(host: String) = edit { it[Keys.lastHost] = host }
     suspend fun setLastPort(port: Int) = edit { it[Keys.lastPort] = port }
     suspend fun setKeepAwake(on: Boolean) = edit { it[Keys.keepAwake] = on }
+    suspend fun setInjectMode(mode: String) = edit { it[Keys.injectMode] = mode }
 
     private suspend fun edit(block: (androidx.datastore.preferences.core.MutablePreferences) -> Unit) {
         context.dataStore.edit { prefs -> block(prefs) }
@@ -67,6 +69,7 @@ class SettingsRepository(private val context: Context) {
             lastHost = this[Keys.lastHost] ?: "",
             lastPort = this[Keys.lastPort] ?: 27100,
             keepAwake = this[Keys.keepAwake] ?: true,
+            injectMode = this[Keys.injectMode] ?: "AUTO",
         )
     }
 }

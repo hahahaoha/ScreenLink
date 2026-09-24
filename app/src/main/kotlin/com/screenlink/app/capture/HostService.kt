@@ -100,6 +100,10 @@ class HostService : Service() {
             LiveQuality.apply(width, quality, fps)
             HostRuntime.log("画质已切换：${LiveQuality.captureWidth}px / q${LiveQuality.jpegQuality} / ${LiveQuality.maxFps}fps")
         }
+        InputInjector.onLog = { message ->
+            HostRuntime.log(message)
+            server.sendLog(message)
+        }
         observeServer()
     }
 

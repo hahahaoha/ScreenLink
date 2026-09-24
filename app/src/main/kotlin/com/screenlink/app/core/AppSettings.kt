@@ -25,6 +25,8 @@ data class AppSettings(
     /** 主控端上次连接过的地址 */
     val lastHost: String = "",
     val lastPort: Int = 27100,
+    /** 注入方式：AUTO / BINDER / SHELL */
+    val injectMode: String = "AUTO",
     /** 被控时保持屏幕常亮 */
     val keepAwake: Boolean = true,
 )

@@ -121,6 +121,16 @@ object ShizukuBridge {
         return runCatching { method.invoke(null, name) as? IBinder }.getOrNull()
     }
 
+    /**
+     * 把系统服务 binder 包一层，事务会由 Shizuku 服务端（shell 身份）发出。
+     * 不包的话事务带的是本 App 的 uid，INJECT_EVENTS 之类的系统权限校验必然被拒。
+     */
+    fun wrapBinder(binder: IBinder): IBinder? = runCatching {
+        Class.forName("rikka.shizuku.ShizukuBinderWrapper")
+            .getConstructor(IBinder::class.java)
+            .newInstance(binder) as IBinder
+    }.getOrNull()
+
     /** 以 shell 身份跑一条命令 */
     fun newProcess(command: Array<String>): Process? {
         if (!hasPermission) return null
