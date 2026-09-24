@@ -39,11 +39,16 @@ jobs:
           gradle wrapper --gradle-version 8.10.2
           ./gradlew assembleDebug --stacktrace
 
+      - name: 给 APK 起个好名字
+        run: |
+          cp app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/ScreenLink-debug.apk
+          ls -lh app/build/outputs/apk/debug/
+
       - name: 上传 APK 产物
         uses: actions/upload-artifact@v4
         with:
           name: ScreenLink-debug
-          path: app/build/outputs/apk/debug/*.apk
+          path: app/build/outputs/apk/debug/ScreenLink-debug.apk
           if-no-files-found: error
           retention-days: 30
 
@@ -55,13 +60,15 @@ jobs:
           name: ScreenLink 最新构建
           body: |
             由 GitHub Actions 自动构建的 debug 版 APK。
-            下载地址固定：`https://github.com/hahahaoha/ScreenLink/releases/download/latest/ScreenLink-debug.apk`
+
+            固定下载地址：
+            `https://github.com/hahahaoha/ScreenLink/releases/download/latest/ScreenLink-debug.apk`
           prerelease: true
-          files: app/build/outputs/apk/debug/*.apk
+          files: app/build/outputs/apk/debug/ScreenLink-debug.apk
 
       - name: 打 tag 时发正式 Release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
-          files: app/build/outputs/apk/debug/*.apk
+          files: app/build/outputs/apk/debug/ScreenLink-debug.apk
           generate_release_notes: true
