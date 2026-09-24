@@ -227,7 +227,6 @@ object InputInjector {
                 val event = KeyEvent(now, now, action, keyCode, 0)
                 event.source = InputDevice.SOURCE_KEYBOARD
                 method.invoke(manager, event, INJECT_MODE_ASYNC)
-                event.recycle()
             }
             true
         } catch (t: Throwable) {

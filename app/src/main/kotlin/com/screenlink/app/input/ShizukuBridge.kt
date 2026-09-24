@@ -25,8 +25,11 @@ enum class ShizukuState {
 }
 
 /**
- * 只做三件事：盯着 Shizuku 的 binder、申请权限、拿到系统服务的 binder。
+ * 只做三件事：盯着 Shizuku 的 binder、申请权限、借用 shell 身份干活。
  * 真正的注入逻辑在 [InputInjector]。
+ *
+ * 注意：Shizuku 13 把 newProcess 收成了 private 静态方法，只能用反射调；
+ * 老版本是 public，两条路都留着。
  */
 object ShizukuBridge {
 
@@ -39,11 +42,23 @@ object ShizukuBridge {
     private var initialized = false
     private lateinit var appContext: Context
 
-    /** rikka.shizuku.SystemServiceHelper#getSystemService(String)，某些版本可能没有 */
+    /** rikka.shizuku.SystemServiceHelper#getSystemService(String) */
     private val systemServiceMethod: Method? by lazy {
         runCatching {
             Class.forName("rikka.shizuku.SystemServiceHelper")
                 .getMethod("getSystemService", String::class.java)
+        }.getOrNull()
+    }
+
+    private val newProcessMethod: Method? by lazy {
+        val cmdType = Array<String>::class.java
+        runCatching {
+            Class.forName("rikka.shizuku.Shizuku")
+                .getDeclaredMethod("newProcess", cmdType, cmdType, String::class.java)
+                .apply { isAccessible = true }
+        }.getOrNull() ?: runCatching {
+            Class.forName("rikka.shizuku.Shizuku")
+                .getMethod("newProcess", cmdType, cmdType, String::class.java)
         }.getOrNull()
     }
 
@@ -102,32 +117,16 @@ object ShizukuBridge {
     /** 以 shell 身份向系统服务管理器要一个 binder */
     fun systemService(name: String): IBinder? {
         if (!hasPermission) return null
-        systemServiceMethod?.let { method ->
-            runCatching { method.invoke(null, name) as? IBinder }.getOrNull()?.let { return it }
-        }
-        // 退路：直接问 IShizukuService（不同 Shizuku 版本包名有差异，挨个试）
-        val candidates = listOf(
-            "moe.shizuku.server.IShizukuService",
-            "rikka.shizuku.IShizukuService",
-        )
-        for (className in candidates) {
-            val binder = runCatching {
-                val stub = Class.forName("$className\$Stub")
-                val service = stub
-                    .getMethod("asInterface", IBinder::class.java)
-                    .invoke(null, Shizuku.getBinder())
-                val method = Class.forName(className)
-                    .getMethod("getSystemService", String::class.java)
-                method.invoke(service, name) as? IBinder
-            }.getOrNull()
-            if (binder != null) return binder
-        }
-        return null
+        val method = systemServiceMethod ?: return null
+        return runCatching { method.invoke(null, name) as? IBinder }.getOrNull()
     }
 
     /** 以 shell 身份跑一条命令 */
-    fun newProcess(command: Array<String>): Process? =
-        runCatching { Shizuku.newProcess(command, null, null) }.getOrNull()
+    fun newProcess(command: Array<String>): Process? {
+        if (!hasPermission) return null
+        val method = newProcessMethod ?: return null
+        return runCatching { method.invoke(null, command, null, null) as? Process }.getOrNull()
+    }
 
     fun version(): String = runCatching { "v${Shizuku.getVersion()}" }.getOrDefault("未知")
 }
